@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 import cv2
 
-model = YOLO("best.pt")
+model = YOLO("hoop_model.pt")
 
 # start webcam at 0 (default camera)
 cap = cv2.VideoCapture(1)
