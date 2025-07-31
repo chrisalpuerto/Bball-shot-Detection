@@ -6,9 +6,9 @@ So far I have basketball and hoop detection models. To test these models out:
 
 1. pip install requiremenets.txt
 2. Inside CamTest.py, edit:
-'''
-annotated_frame = 
-'''
+```
+annotated_frame = hoop_results.plot()
+```
 to either hoop_results.plot() for hoop detection or ball_results.plot() for ball detection
 
 3. run CamTest.py
