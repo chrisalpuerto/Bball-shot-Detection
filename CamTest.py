@@ -3,6 +3,7 @@ import cv2
 
 hoop_model = YOLO("MLmodels/hoop_model.pt") # loading the hoop detection model
 ball_model = YOLO("MLmodels/best.pt") # loading the ball detection model
+hoop_model2 = YOLO("MLmodels/hoop_model_2_YOLO11.pt")
 # start webcam at 0 (default camera)
 cap = cv2.VideoCapture(0)
 while True:
@@ -11,7 +12,7 @@ while True:
         break
 
     # make detections
-    hoop_results = hoop_model(frame)[0]
+    hoop_results = hoop_model2(frame)[0]
     ball_results = ball_model(frame)[0]
     annotated_frame = hoop_results.plot()
     # annotated_frame = ball_results.plot(annotated_frame, conf=False)
