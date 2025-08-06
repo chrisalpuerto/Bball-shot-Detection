@@ -2,6 +2,7 @@ import os
 import google.genai as genai
 from dotenv import load_dotenv
 import time
+from moviepy.editor import VideoFileClip, vfx
 load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
@@ -9,6 +10,12 @@ if not api_key:
     raise ValueError("GEMINI_API_KEY environment variable not set")
 client = genai.Client()
 
+def slow_down_video(input_path, output_path, speed_factor=2.0):
+    clip = VideoFileClip(input_path)
+    slowed_clip = clip.fx(vfx.speedx, speed_factor)
+    slowed_clip.write_videofile(output_path, audio=True)
+    clip.close()
+    slowed_clip.close()
 
 def process_video_and_summarize(file_path):
     """
@@ -31,10 +38,31 @@ def process_video_and_summarize(file_path):
         print("Generating summary...")
         
         # CHANGE SCRIPT IN CONTENTS ARRAY 
-
+        context1 = "This video is a video of a basketball player shooting around. Can you count how many shots he makes, as well as misses, as well as field goal percentage?"
+        context2 = "This video is a video of a basketball player shooting around. Can you count how many shots he makes, as well as misses, as well as field goal percentage? A shot is defined as the player shooting the ball towards the hoop, and a make is defined as the ball going through the hoop. A miss is defined as the ball not going through the hoop. Please provide bullet points of each made and missed shot by timestamp."
+        context3 = "This video is a video of a full court basketball game, but only one half court of it. During the game, can you count how many shots are made in the video, as well as give the timestamps of each made shot in the video? A shot is defined as the player shooting the ball towards the hoop, and a make is defined as the ball going through the hoop. A miss is defined as the ball not going through the hoop. Please provide bullet points of each made and missed shot by timestamp."
+        prompt4 = """Act as a world-class basketball analyst with a deep understanding of shot mechanics, court geography, and statistical analysis. Your task is to meticulously analyze the entire video to identify every distinct shot attempt. The analysis should be comprehensive and structured for clarity. For the video provided, please provide a detailed report on every shot attempt, including the following analysis for each one:
+                    Subject Recognition (SR): Identify the player who is either shooting the ball or in the immediate process of a layup.
+                    Shot Location (SL): Based on the player's position on the court, categorize the shot location from the following list:
+                    Right corner/Right baseline
+                    Left corner/Left baseline
+                    Right wing
+                    Left wing
+                    Right elbow
+                    Left elbow
+                    Right block
+                    Left block
+                    Top of the key
+                    Mid-range (if not an exact match to the above)
+                    In the paint (if not an exact match to the above)
+                    Other (if none of the above apply)
+                    Shot Type (ST): Determine if the shot is a 'Jumpshot' or a 'Layup'.
+                    Time Stamp of Shot (TS): Identify the exact timestamp of the shot, formatted as HH:MM:SS.
+                    Make/Miss (MM): Analyze the position of the ball relative to the hoop, the player's follow-through, and the surrounding context (e.g., net movement) to determine the outcome. Conclude whether the shot is a 'Make' or a 'Miss'. If the outcome is not determinable, state 'Undetermined'.
+                    Your response should be formatted as a structured JSON object containing a list of shot events, with each event represented as a separate object."""
         response = client.models.generate_content(
-            model="gemini-1.5-pro",
-            contents=[uploaded_file, "This video is a video of a basketball player shooting around. Can you count how many shots he makes, as well as misses, as well as field goal percentage?"]
+            model="gemini-2.5-pro",
+            contents=[uploaded_file, prompt4],
         )
         print("Response received:")
         print(response.text)
@@ -48,5 +76,8 @@ def process_video_and_summarize(file_path):
 
 
 if __name__ == "__main__":
-    file_name = "videoDataset/meshooting.mp4"
-    process_video_and_summarize(file_name)
+    file_name = "game1sideAPart1.mp4"
+    file_path = f"videoDataset/{file_name}"
+    #slowed_file_name = f"{file_path}_slow.mp4"
+    #slow_down_video(file_path, slowed_file_name, speed_factor=0.5)
+    process_video_and_summarize(file_path)
