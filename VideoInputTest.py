@@ -60,6 +60,20 @@ def process_video_and_summarize(file_path):
                     Time Stamp of Shot (TS): Identify the exact timestamp of the shot, formatted as HH:MM:SS.
                     Make/Miss (MM): Analyze the position of the ball relative to the hoop, the player's follow-through, and the surrounding context (e.g., net movement) to determine the outcome. Conclude whether the shot is a 'Make' or a 'Miss'. If the outcome is not determinable, state 'Undetermined'.
                     Your response should be formatted as a structured JSON object containing a list of shot events, with each event represented as a separate object."""
+        prompt5 = """
+                    Act as an elite basketball coach and analyst. Analyze every shot attempt in this video with the following structure:
+
+                    - Player Identification (if possible)
+                    - Shot Type (Jump shot, Layup, Dunk, etc.)
+                    - Shot Location (e.g., right corner, top of the key)
+                    - Time of Shot (timestamp or visual marker)
+                    - Result (Make or Miss)
+                    - Form Analysis (brief breakdown of mechanics)
+                    - Defensive Pressure (if present)
+
+                    Be thorough, structured, and use bullet points for each shot.
+                    """
+
         response = client.models.generate_content(
             model="gemini-2.5-pro",
             contents=[uploaded_file, prompt4],
@@ -76,7 +90,7 @@ def process_video_and_summarize(file_path):
 
 
 if __name__ == "__main__":
-    file_name = "game1sideAPart1.mp4"
+    file_name = "meshooting.mp4"
     file_path = f"videoDataset/{file_name}"
     #slowed_file_name = f"{file_path}_slow.mp4"
     #slow_down_video(file_path, slowed_file_name, speed_factor=0.5)
