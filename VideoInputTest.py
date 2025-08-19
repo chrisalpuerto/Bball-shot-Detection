@@ -90,7 +90,7 @@ def process_video_and_summarize(file_path):
 
 
 if __name__ == "__main__":
-    file_name = "alivschisti2.mp4"
+    file_name = "trimmed_video.mp4"
     file_path = f"videoDataset/{file_name}"
     #slowed_file_name = f"{file_path}_slow.mp4"
     #slow_down_video(file_path, slowed_file_name, speed_factor=0.5)
