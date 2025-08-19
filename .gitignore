@@ -2,5 +2,5 @@ env/
 __pycache__/
 .env
 videoDataset/
-PromptNotes.txt
+PromptNotes.md
 gen-lang-client-0160391651-0a1c9e66064f.json
