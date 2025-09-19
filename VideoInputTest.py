@@ -10,7 +10,7 @@ if not api_key:
     raise ValueError("GEMINI_API_KEY environment variable not set")
 client = genai.Client()
 
-def slow_down_video(input_path, output_path, speed_factor=2.0):
+def slow_down_video(input_path, output_path, speed_factor=0.5):
     clip = VideoFileClip(input_path)
     slowed_clip = clip.fx(vfx.speedx, speed_factor)
     slowed_clip.write_videofile(output_path, audio=True)
@@ -73,9 +73,131 @@ def process_video_and_summarize(file_path):
 
                     Be thorough, structured, and use bullet points for each shot.
                     """
+        prompt6 = """
+                Act as a world-class basketball analyst with a deep understanding of shot mechanics, court geography, and statistical analysis. Your task is to analyze the entire video and identify every distinct shot attempt **only from players actively participating in the ongoing 5v5 game**. 
 
+                Please ignore shots taken by people who are not on the court as part of the active game (e.g., warmup shooters, people on the sidelines, or players not engaged in real-time gameplay).
+
+                To help determine who is in the game, consider:
+                - Players who are consistently on the court and moving as part of the team flow
+                - Jerseys, movement patterns, or formations indicative of team play
+                - Whether other players are defending or watching passively
+
+                For each shot attempt **from active players only**, provide:
+
+                - **Subject Recognition (SR)**: Identify the player taking the shot.
+                - **Shot Location (SL)**: One of the following:
+                    - Right corner/Right baseline
+                    - Left corner/Left baseline
+                    - Right wing
+                    - Left wing
+                    - Right elbow
+                    - Left elbow
+                    - Right block
+                    - Left block
+                    - Top of the key
+                    - Mid-range (if not an exact match to the above)
+                    - In the paint (if not an exact match to the above)
+                    - Other (if none of the above apply)
+                - **Shot Type (ST)**: 'Jumpshot' or 'Layup'
+                - **Time Stamp of Shot (TS)**: Format as HH:MM:SS
+                - **Make/Miss (MM)**: Based on ball trajectory, hoop interaction, and player reaction. If unclear, state 'Undetermined'
+
+                Only include **active game** shots in your structured JSON output:
+                ```json
+                [
+                {
+                    "SR": "...",
+                    "SL": "...",
+                    "ST": "...",
+                    "TS": "...",
+                    "MM": "..."
+                },
+                ...
+                ]
+                """
+        prompt7 = """ 
+                Act as a world-class basketball analyst with deep expertise in shot mechanics, court geography, and statistical breakdowns. Your task is to analyze the provided basketball video and extract detailed shot data in a structured format.
+
+                Carefully identify every distinct shot attempt, and for each one, extract the following fields:
+
+                - **subject**: Describe the player who takes the shot (e.g., "Player in black hoodie and black shorts").
+                - **location**: One of the following court locations:
+                    - Right corner / Right baseline
+                    - Left corner / Left baseline
+                    - Right wing
+                    - Left wing
+                    - Right elbow
+                    - Left elbow
+                    - Right block
+                    - Left block
+                    - Top of the key
+                    - Mid-range (if not an exact match)
+                    - In the paint (if not an exact match)
+                    - Other (if none of the above apply)
+                - **shotType**: Either "jump_shot" or "layup".
+                - **timestamp**: The time of the shot in the video, formatted as HH:MM:SS.
+                - **outcome**: "made", "missed", or "undetermined", based on the ball's trajectory, net movement, and player follow-through.
+                - **confidence**: A float between 0 and 1 representing how confident you are in the shot analysis (e.g., 0.92).
+                - **playerPosition**: An approximate location of the player when shooting, using coordinates in a `{ "x": <0-100>, "y": <0-100> }` format, where 0-100 is a relative scale of the court space.
+
+                ---
+
+                Your response **must** be a single valid JSON object in the following structure (do not include any extra text, formatting, or explanation):
+
+                ```json
+                {
+                "analysis": {
+                    "shots": [
+                    {
+                        "subject": "Player in black hoodie and black shorts",
+                        "location": "Top of the key",
+                        "shotType": "jump_shot",
+                        "timestamp": "00:00:43",
+                        "outcome": "made",
+                        "confidence": 0.92,
+                        "playerPosition": { "x": 35, "y": 60 }
+                    }
+                    // additional shots here...
+                    ],
+                    "gameStats": {
+                    "totalShots": <int>,
+                    "madeShots": <int>,
+                    "shootingPercentage": <int>,
+                    "shotTypes": {
+                        "jump_shot": <int>,
+                        "layup": <int>
+                    },
+                    "quarterBreakdown": [
+                        { "quarter": 1, "shots": <int>, "made": <int> },
+                        { "quarter": 2, "shots": <int>, "made": <int> },
+                        { "quarter": 3, "shots": <int>, "made": <int> },
+                        { "quarter": 4, "shots": <int>, "made": <int> }
+                    ]
+                    },
+                    "basketDetection": {
+                    "basketsVisible": 1,
+                    "courtDimensions": { "width": 28, "height": 15 }
+                    },
+                    "playerTracking": {
+                    "playersDetected": <int>,
+                    "movementAnalysis": []
+                    },
+                    "highlights": [
+                    {
+                        "timestamp": <int>,
+                        "type": "Three Pointer" | "Dunk",
+                        "description": "Highlight-worthy description",
+                        "importance": 0.85
+                    }
+                    // optional additional highlights
+                    ]
+                }
+                }
+                        
+                    """
         response = client.models.generate_content(
-            model="gemini-2.5-pro",
+            model="gemini-2.5-flash",
             contents=[uploaded_file, prompt4],
         )
         print("Response received:")
@@ -90,8 +212,8 @@ def process_video_and_summarize(file_path):
 
 
 if __name__ == "__main__":
-    file_name = "trimmed_video.mp4"
+    file_name = "meshooting2.mp4"
     file_path = f"videoDataset/{file_name}"
-    #slowed_file_name = f"{file_path}_slow.mp4"
-    #slow_down_video(file_path, slowed_file_name, speed_factor=0.5)
+    slowed_file_path = f"videoDataset/{file_name.split('.')[0]}_slowed.mp4"
+    #slow_down_video(file_path, slowed_file_path, speed_factor=0.5)
     process_video_and_summarize(file_path)
